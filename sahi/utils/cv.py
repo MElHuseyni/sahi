@@ -438,53 +438,56 @@ def visualize_object_predictions(
         object_prediction = object_prediction.deepcopy()
 
         bbox = object_prediction.bbox.to_voc_bbox()
-        category_name = object_prediction.category.name
-        score = object_prediction.score.value
+        if object_prediction.category.name == 'car':
+            category_name = object_prediction.category.name
+            score = object_prediction.score.value
+            label = f"{category_name} {score:.2f}"
 
-        # set color
-        if colors is not None:
-            color = colors(object_prediction.category.id)
-        # visualize masks if present
-        if object_prediction.mask is not None:
-            # deepcopy mask so that original is not altered
-            mask = object_prediction.mask.bool_mask
-            # draw mask
-            rgb_mask = apply_color_mask(mask, color)
-            image = cv2.addWeighted(image, 1, rgb_mask, 0.4, 0)
-        # set bbox points
-        p1, p2 = (int(bbox[0]), int(bbox[1])), (int(bbox[2]), int(bbox[3]))
-        # visualize boxes
-        cv2.rectangle(
-            image,
-            p1,
-            p2,
-            color=color,
-            thickness=rect_th,
-        )
-        # arange bounding box text location
-        label = f"{category_name} {score:.2f}"
-        w, h = cv2.getTextSize(label, 0, fontScale=text_size, thickness=text_th)[0]  # label width, height
-        outside = p1[1] - h - 3 >= 0  # label fits outside box
-        p2 = p1[0] + w, p1[1] - h - 3 if outside else p1[1] + h + 3
-        # add bounding box text
-        cv2.rectangle(image, p1, p2, color, -1, cv2.LINE_AA)  # filled
-        cv2.putText(
-            image,
-            label,
-            (p1[0], p1[1] - 2 if outside else p1[1] + h + 2),
-            0,
-            text_size,
-            (255, 255, 255),
-            thickness=text_th,
-        )
 
-    # export if output_dir is present
-    if output_dir is not None:
-        # export image with predictions
-        Path(output_dir).mkdir(parents=True, exist_ok=True)
-        # save inference result
-        save_path = str(Path(output_dir) / (file_name + "." + export_format))
-        cv2.imwrite(save_path, cv2.cvtColor(image, cv2.COLOR_RGB2BGR))
+            # set color
+            if colors is not None:
+                color = colors(object_prediction.category.id)
+            # visualize masks if present
+            if object_prediction.mask is not None:
+                # deepcopy mask so that original is not altered
+                mask = object_prediction.mask.bool_mask
+                # draw mask
+                rgb_mask = apply_color_mask(mask, color)
+                image = cv2.addWeighted(image, 1, rgb_mask, 0.4, 0)
+            # set bbox points
+            p1, p2 = (int(bbox[0]), int(bbox[1])), (int(bbox[2]), int(bbox[3]))
+            # visualize boxes
+            cv2.rectangle(
+                image,
+                p1,
+                p2,
+                color=color,
+                thickness=rect_th,
+            )
+            # arange bounding box text location
+            # label = f"{category_name} {score:.2f}"
+            w, h = cv2.getTextSize(label, 0, fontScale=text_size, thickness=text_th)[0]  # label width, height
+            outside = p1[1] - h - 3 >= 0  # label fits outside box
+            p2 = p1[0] + w, p1[1] - h - 3 if outside else p1[1] + h + 3
+            # add bounding box text
+            cv2.rectangle(image, p1, p2, color, -1, cv2.LINE_AA)  # filled
+            cv2.putText(
+                image,
+                label,
+                (p1[0], p1[1] - 2 if outside else p1[1] + h + 2),
+                0,
+                text_size,
+                (255, 255, 255),
+                thickness=text_th,
+            )
+
+        # export if output_dir is present
+        if output_dir is not None:
+            # export image with predictions
+            Path(output_dir).mkdir(parents=True, exist_ok=True)
+            # save inference result
+            save_path = str(Path(output_dir) / (file_name + "." + export_format))
+            cv2.imwrite(save_path, cv2.cvtColor(image, cv2.COLOR_RGB2BGR))
 
     elapsed_time = time.time() - elapsed_time
     return {"image": image, "elapsed_time": elapsed_time}
